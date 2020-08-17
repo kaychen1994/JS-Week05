@@ -30,13 +30,15 @@
                 <span class="text-red ml-4">NT {{item.price}} 元</span>
               </div>
               <div class="d-flex justify-content-between p-3">
-                <button type="button" class="btn btn-dark px-3 py-2" @click="getProduct(item.id)">
+                <button type="button" class="btn btn-dark px-3 py-2" @click.prevent="getProduct(item.id)" :disabled="status.loadingItem === item.id">
                   查看更多
+                  <i v-if="status.loadingItem === item.id" class="spinner-grow spinner-grow-sm"></i>
                 </button>
-                <button type="button" class="btn btn-danger px-3 py-2 d-flex">
-                  <span class="mr-3" @click="goToCart(item.id)">加到購物車</span>
+                <button type="button" class="btn btn-danger px-3 py-2 d-flex" :disabled="status.loadingItem === item.id">
+                  <span class="mr-3" @click.prevent="goToCart(item.id)">加到購物車</span>
                   <span class="material-icons">
                     add_shopping_cart
+                    <i v-if="status.loadingItem === item.id" class="spinner-grow spinner-grow-sm"></i>
                   </span>
                 </button>
               </div>
@@ -65,7 +67,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉</button>
-            <button type="button" class="btn btn-danger" @click="goToCart(item.id)">加入購物車</button>
+            <button type="button" class="btn btn-danger" @click.prevent="goToCart(tempProduct.id)">加入購物車</button>
           </div>
         </div>
   </div>
@@ -84,8 +86,8 @@ export default {
       carts: [],
       cartTotal: 0,
       status: {
-        lodingItem: '' // 先給預設值才不會出錯
-      } // 點擊後的狀態
+        loadingItem: ''// 先給預設值才不會出錯
+      }
     }
   },
   created () {
@@ -106,15 +108,22 @@ export default {
         })
     },
     getProduct (id) {
+      this.status.loadingItem = id
       const url = `${process.env.VUE_APP_APIPATH}${process.env.VUE_APP_UUID}/ec/product/${id}`
       this.$http
         .get(url)
         .then((res) => {
           this.tempProduct = res.data.data
           $('#prdocutInfo').modal('show')
+          this.status.loadingItem = ''
+        })
+        .catch((err) => {
+          this.status.loadingItem = ''
+          console.log(err.response)
         })
     },
     goToCart (id, quantity = 1) { // 數量預設值 1
+      this.status.loadingItem = id
       const url = `${process.env.VUE_APP_APIPATH}${process.env.VUE_APP_UUID}/ec/shopping`
       const cart = { // api required
         product: id, // id 透過參數傳入
@@ -124,9 +133,12 @@ export default {
         .post(url, cart)
         .then((res) => {
           this.$bus.$emit('in-cart') // bus 傳送 emit 接收 on
+          $('#prdocutInfo').modal('hide') // 加入購物車後關閉 modal
+          this.status.loadingItem = ''
           console.log(res)
         })
         .catch((err) => {
+          this.status.loadingItem = ''
           console.log(err.response)
         })
     }

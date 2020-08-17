@@ -19,7 +19,14 @@
                 <td>{{item.product.title}}</td>
                 <td>{{item.product.price}}</td>
                 <td>
-                  <button class="btn btn-danger" @click="delProduct(item.product.id)">刪除</button>
+                  <button
+                    class="btn btn-danger"
+                    @click.prevent="delProduct(item.product.id)"
+                    :disabled="status.loadingItem === item.id"
+                  >
+                    刪除
+                    <i v-if="status.loadingItem === item.id" class="spinner-grow spinner-grow-sm"></i>
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -36,12 +43,13 @@
       <div class="col-md-4 pr-3" id="ValidationProvider">
         <h2 class="font-weight-bold">確認訂單</h2>
         <validation-observer v-slot="{ invalid }" class="col-md-6">
-          <form>
+          <form @submit.prevent="sendForm">
             <div class="form-group">
               <validation-provider v-slot="{ errors, classes }" rules="required|email">
                 <label for="email">Email</label>
                 <input
                   type="email"
+                  name="信箱"
                   v-model="form.email"
                   class="form-control"
                   id="email"
@@ -56,6 +64,7 @@
                 <label for="name">收件人姓名</label>
                 <input
                   type="text"
+                  name="收件人姓名"
                   v-model="form.name"
                   class="form-control"
                   id="name"
@@ -70,6 +79,7 @@
                 <label for="phone">收件人電話</label>
                 <input
                   type="text"
+                  name="收件人電話"
                   v-model="form.phone"
                   class="form-control"
                   id="phone"
@@ -103,10 +113,30 @@
         </validation-observer>
       </div>
     </div>
+    <!-- modal -->
+    <div class="modal" tabindex="-1" id="sendForm">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-danger">表單已送出</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>您的表單已送出，訂單準備中，預計 2~3 個工作天到貨</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">關閉視窗</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import $ from 'jquery'
 export default {
   data () {
     return {
@@ -120,7 +150,10 @@ export default {
         package: '超商取貨',
         message: ''
       },
-      isLoading: false
+      isLoading: false,
+      status: {
+        loadingItem: '' // 先給預設值才不會出錯
+      }
     }
   },
   created () {
@@ -150,18 +183,22 @@ export default {
       this.cartTotal = total // 購物車總價格
     },
     delProduct (id) {
-      this.isLoadintg = true
+      this.status.loadingItem = id
       const url = `${process.env.VUE_APP_APIPATH}${process.env.VUE_APP_UUID}/ec/shopping/${id}`
       this.$http
         .delete(url)
         .then((res) => {
-          this.isLoadintg = false
+          this.status.loadingItem = ''
           this.getCart()
         })
         .catch((err) => {
-          this.isLoadintg = false
+          this.status.loadingItem = ''
           console.log(err.response)
         })
+    },
+    sendForm () {
+      console.log('送出表單')
+      $('#sendForm').modal('show')
     }
   }
 }

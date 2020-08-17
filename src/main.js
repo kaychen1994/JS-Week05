@@ -3,8 +3,12 @@ import axios from 'axios'
 import VueAxios from 'vue-axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
-import { ValidationObserver, ValidationProvider, configure, extend } from 'vee-validate'
+import {
+  ValidationObserver,
+  ValidationProvider, configure, localize, extend
+} from 'vee-validate'
 import * as rules from 'vee-validate/dist/rules' // 驗證規則
+import zhTW from './zh_TW.js'
 import 'bootstrap'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import $ from 'jquery'
@@ -28,6 +32,8 @@ configure({ // 驗證樣式
 })
 Vue.component('ValidationProvider', ValidationProvider)
 Vue.component('ValidationObserver', ValidationObserver)
+localize('tw', zhTW)
+
 window.$ = $
 
 new Vue({
